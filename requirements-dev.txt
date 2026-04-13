@@ -1,0 +1,37 @@
+# Development dependencies for xss-generator
+# Install with: pip install -r requirements-dev.txt
+
+# Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-asyncio>=0.20.0
+
+# Code quality
+black>=23.0.0          # Code formatter
+flake8>=6.0.0          # Linting
+pylint>=2.17.0         # Advanced linting
+mypy>=1.0.0            # Type checking
+isort>=5.12.0          # Import sorting
+
+# Documentation
+sphinx>=6.0.0          # Documentation generator
+sphinx-rtd-theme>=1.2.0  # ReadTheDocs theme
+
+# API & Web
+flask>=2.3.0           # REST API framework
+fastapi>=0.95.0        # Modern async web framework
+uvicorn>=0.21.0        # ASGI server for FastAPI
+
+# Configuration
+pyyaml>=6.0            # YAML support
+python-dotenv>=1.0.0   # .env file support
+
+# Additional security & utilities
+bandit>=1.7.0          # Security linting
+safety>=2.3.0          # Dependency vulnerabilities check
+python-dateutil>=2.8.0 # Date utilities
+
+# Development tools
+ipython>=8.10.0        # Enhanced Python shell
+jupyter>=1.0.0         # Jupyter notebooks for testing
+pre-commit>=3.0.0      # Git pre-commit hooks

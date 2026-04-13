@@ -1,0 +1,143 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autoxss"
+version = "5.0.0"
+description = "Automated XSS Discovery Framework - Professional penetration testing tool"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "R0b3rt0", email = "author@example.com" },
+]
+license = { text = "MIT" }
+keywords = ["xss", "security", "penetration-testing", "web-security", "vulnerability-scanner"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Security",
+]
+
+dependencies = [
+    "requests>=2.28.0",
+    "beautifulsoup4>=4.11.0",
+    "colorama>=0.4.6",
+    "urllib3>=1.26.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "pylint>=2.17.0",
+    "isort>=5.12.0",
+]
+api = [
+    "fastapi>=0.95.0",
+    "uvicorn[standard]>=0.21.0",
+    "pydantic>=2.0.0",
+]
+yaml = [
+    "pyyaml>=6.0",
+]
+all = [
+    "autoxss[dev,api,yaml]",
+]
+
+[project.urls]
+Homepage = "https://github.com/Robertmwatua/xss-generator"
+Repository = "https://github.com/Robertmwatua/xss-generator.git"
+"Bug Tracker" = "https://github.com/Robertmwatua/xss-generator/issues"
+Documentation = "https://github.com/Robertmwatua/xss-generator"
+
+[project.scripts]
+autoxss = "xssgen:main"
+autoxss-api = "api_server:main"
+
+[tool.setuptools]
+packages = [".", "tests"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_gitignore = true
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "security: marks tests as security-related",
+]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+    ".venv/*",
+    "venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
