@@ -1,0 +1,89 @@
+# AutoXSS Configuration Template
+# Copy this file to use non-interactive scanning with: python xssgen.py --config config.yaml
+
+target:
+  url: "https://example.com"           # Required: target URL
+  endpoint: null                        # Optional: specific endpoint
+  known_param: null                     # Optional: specific parameter
+
+scan:
+  mode: "standard"                      # quick|standard|deep|stealth|targeted
+  profile: "all"                        # all|waf_bypass|polyglot|dom|blind|quick
+  depth: 2                              # crawl depth: 1-5
+  threads: 5                            # concurrent threads: 1-20
+  delay: 0                              # seconds between requests
+  timeout: 10                           # request timeout in seconds
+
+auth:
+  cookies: null                         # "JSESSIONID=abc123; token=xyz"
+  headers: null                         # Custom HTTP headers as string
+  proxy: null                           # "http://127.0.0.1:8080"
+
+vectors:
+  blind_callback: null                  # URL for blind XSS results
+  skip_headers: false                   # skip HTTP header testing
+  test_dom: true                        # test DOM sinks/sources
+
+output:
+  verbose: false                        # detailed logging
+  save_json: true                       # save JSON report
+  save_html: true                       # save HTML report
+  save_text: true                       # save text report
+
+compliance:
+  require_authorization: true           # require explicit confirmation
+  audit_log: true                       # enable audit trail
+  audit_log_dir: ".audit_logs"          # directory for audit logs
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# EXAMPLES
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Quick scan with defaults:
+# target:
+#   url: "https://dvwa.com"
+
+# Deep security assessment:
+# target:
+#   url: "https://target.com"
+# scan:
+#   mode: "deep"
+#   profile: "all"
+#   depth: 3
+#   threads: 4
+
+# WAF bypass with stealth:
+# target:
+#   url: "https://protected.com"
+# scan:
+#   mode: "stealth"
+#   profile: "waf_bypass"
+#   delay: 2
+
+# Targeted parameter fuzzing with auth:
+# target:
+#   url: "https://app.com/search"
+#   known_param: "q"
+# auth:
+#   cookies: "session=abc123xyz"
+#   headers: "Authorization: Bearer token123"
+# scan:
+#   mode: "targeted"
+#   profile: "all"
+
+# Blind XSS with callback:
+# target:
+#   url: "https://target.com"
+# scan:
+#   profile: "blind"
+# vectors:
+#   blind_callback: "https://burpcollab.net/c/abc123"
+
+# With proxy (Burp Suite):
+# target:
+#   url: "https://target.com"
+# auth:
+#   proxy: "http://127.0.0.1:8080"
+# output:
+#   verbose: true

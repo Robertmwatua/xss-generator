@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  # XSS Scanner - Main service
+  xss-scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: autoxss:latest
+    container_name: autoxss-scanner
+    
+    # For interactive mode, uncomment:
+    # stdin_open: true
+    # tty: true
+    
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    
+    volumes:
+      # Mount reports and logs outside container
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+      - ./audit_logs:/app/.audit_logs
+      # Mount config files
+      - ./config:/app/config
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 512M
+        reservations:
+          cpus: '1'
+          memory: 256M
+    
+    networks:
+      - scanner-net
+
+  # Burp Suite (optional) - for proxying traffic
+  burp-proxy:
+    image: portswigger/burp-suite-community:latest
+    container_name: burp-proxy
+    ports:
+      - "8080:8080"  # Proxy port
+      - "1099:1099"  # JMX port
+    environment:
+      - "JVM_ARGS=-Xmx4g"
+    volumes:
+      - burp-data:/home/burp/.config
+    networks:
+      - scanner-net
+    profiles:
+      - with-burp  # Only start with: docker-compose --profile with-burp up
+
+  # OWASP ZAP API (optional) - for additional scanning
+  zap-api:
+    image: owasp/zap2docker-stable:latest
+    container_name: zap-api
+    ports:
+      - "8090:8080"
+      - "8091:8081"
+    environment:
+      - ZAP_PORT=8080
+    volumes:
+      - zap-data:/home/zap/.ZAP
+      - ./reports:/app/reports
+    networks:
+      - scanner-net
+    profiles:
+      - with-zap  # Only start with: docker-compose --profile with-zap up
+
+  # Interactsh server (optional) - blind XSS callback
+  interactsh:
+    image: projectdiscovery/interactsh-server:latest
+    container_name: interactsh-server
+    ports:
+      - "53:53/udp"      # DNS
+      - "443:443/tcp"    # HTTPS
+      - "80:80/tcp"      # HTTP
+    environment:
+      - DOMAIN=localhost
+    networks:
+      - scanner-net
+    profiles:
+      - with-callbacks  # Only start with: docker-compose --profile with-callbacks up
+
+volumes:
+  burp-data:
+  zap-data:
+
+networks:
+  scanner-net:
+    driver: bridge
+
+# Usage:
+# 
+# 1. Basic XSS Scanner only:
+#    docker-compose up xss-scanner
+#
+# 2. With Burp Suite proxy:
+#    docker-compose --profile with-burp up
+#
+# 3. With all optional services:
+#    docker-compose --profile with-burp --profile with-zap --profile with-callbacks up
+#
+# 4. Interactive mode (with stdin/tty enabled in compose):
+#    docker-compose run --rm xss-scanner
+#
+# 5. Run specific scan via command:
+#    docker-compose run --rm xss-scanner https://target.com --mode quick
+#
+# 6. View logs:
+#    docker-compose logs -f xss-scanner
+#
+# 7. Stop and remove containers:
+#    docker-compose down

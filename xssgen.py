@@ -27,9 +27,19 @@ import os, re, time, json, random, string, threading, shutil
 from datetime import datetime
 from urllib.parse import urljoin, urlparse, parse_qs, urlunparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Dict, List, Optional, Any, Tuple
 from bs4 import BeautifulSoup
 from colorama import init, Fore, Back, Style
 init(autoreset=True)
+
+# ── custom modules ─────────────────────────────────────────────────────────────
+try:
+    from lib_compliance import ComplianceManager, OWASPMapper
+    from lib_logging import StructuredLogger, PerformanceMetrics, LogLevel
+    from lib_config import ConfigManager
+except ImportError as e:
+    # If modules not available, provide placeholders
+    pass
 
 try:
     import urllib3
@@ -57,9 +67,9 @@ def _strip_ansi(s):
 
 def ok(m):   print(r(G_,  f"  ✔  {m}"))
 def warn(m): print(r(Y_,  f"  ⚠  {m}"))
-def err(m):  print(r(R_,  f"  ✘  {m}"))
+def err(m):  print(r(R_,  f"  X  {m}"))
 def info(m): print(r(C_,  f"  »  {m}"))
-def vuln(m): print(r(R_,  bold(f"  ⚡ VULN ▶ {m}")))
+def vuln(m): print(r(R_,  bold(f"  VULN ▶ {m}")))
 
 def step(n, t):
     pad = TW - len(f"STEP {n}") - len(_strip_ansi(t)) - 14
@@ -155,7 +165,7 @@ def wizard():
     print_banner()
 
     print(r(Y_, bold("  ════════════════════════════════════════════════")))
-    print(r(Y_, bold("     WELCOME TO AUTOXSS INTERACTIVE WIZARD  🔥")))
+    print(r(Y_, bold("     WELCOME TO AUTOXSS INTERACTIVE WIZARD  ")))
     print(r(Y_, bold("  ════════════════════════════════════════════════")))
     print()
     print(r(C_, "  Just answer the prompts. Press ") + r(Y_, "ENTER") +
@@ -166,7 +176,7 @@ def wizard():
     cfg = {}
 
     # ── 1. Target URL ─────────────────────────────────────────────────────────
-    _sec("TARGET URL", "🎯")
+    _sec("TARGET URL")
     print(r(DI, "  ║  Full URL of your target. Include ?param=value if you know it."))
     print(r(DI, "  ║  e.g.  https://testsite.com/search?q=hello"))
     print(r(DI, "  ║        https://testsite.com/login"))
@@ -175,14 +185,14 @@ def wizard():
 
     def valid_url(u):
         if not u.startswith(('http://', 'https://')):
-            print(r(R_, "  ✘  Must start with http:// or https://"))
+            print(r(R_, "  X  Must start with http:// or https://"))
             return False
         return True
 
     cfg['url'] = _prompt("Target URL", validator=valid_url)
 
     # ── 2. Specific endpoint ──────────────────────────────────────────────────
-    _sec("SPECIFIC ENDPOINT  (optional)", "📍")
+    _sec("SPECIFIC ENDPOINT  (optional)")
     print(r(DI, "  ║  Already know the EXACT URL with the input? Enter it here."))
     print(r(DI, "  ║  e.g. https://site.com/search   or   https://site.com/app?s="))
     print(r(DI, "  ║  Leave BLANK → crawler will discover endpoints automatically."))
@@ -191,7 +201,7 @@ def wizard():
     cfg['endpoint'] = ep or None
 
     # ── 3. Known parameter ────────────────────────────────────────────────────
-    _sec("KNOWN PARAMETER  (optional)", "🔑")
+    _sec("KNOWN PARAMETER  (optional)")
     print(r(DI, "  ║  Know the exact input/param name? (e.g.  q, search, id, input)"))
     print(r(DI, "  ║  The scanner will jump straight to fuzzing it."))
     print(r(DI, "  ║  Leave BLANK → full auto-discovery."))
@@ -200,7 +210,7 @@ def wizard():
     cfg['known_param'] = kp or None
 
     # ── 4. Scan mode ──────────────────────────────────────────────────────────
-    _sec("SCAN MODE", "⚙️")
+    _sec("SCAN MODE")
     mode = _choose("Select scan intensity", [
         ("quick",    "Fast — top payloads, URL params only (~1 min)"),
         ("standard", "Standard — crawl + forms + headers  [recommended]"),
@@ -214,7 +224,7 @@ def wizard():
     cfg['delay']   = {'quick':0,'standard':0,'deep':0,'stealth':2.0,'targeted':0}[mode]
 
     # ── 5. Payload profile ────────────────────────────────────────────────────
-    _sec("PAYLOAD PROFILE", "💉")
+    _sec("PAYLOAD PROFILE")
     profile = _choose("Which payload set?", [
         ("all",        "Everything combined — largest set, most thorough"),
         ("waf_bypass", "WAF Bypass — encoded/obfuscated evasion payloads"),
@@ -226,7 +236,7 @@ def wizard():
     cfg['payload_profile'] = profile
 
     # ── 6. Blind XSS ─────────────────────────────────────────────────────────
-    _sec("BLIND XSS CALLBACK  (optional)", "🕳️")
+    _sec("BLIND XSS CALLBACK  (optional)")
     print(r(DI, "  ║  For blind/stored XSS — payloads will beacon to YOUR server."))
     print(r(DI, "  ║  Works with XSS Hunter, interactsh, Burp Collaborator, etc."))
     print(r(DI, "  ║  Leave BLANK to skip blind XSS payloads."))
@@ -235,7 +245,7 @@ def wizard():
     cfg['blind_callback'] = bx or None
 
     # ── 7. Auth ───────────────────────────────────────────────────────────────
-    _sec("AUTHENTICATION", "🔐")
+    _sec("AUTHENTICATION")
     if _yn("Does target need cookies / custom headers?", False):
         _div()
         print(r(DI, "  ║  Cookie format:  session=abc123; csrf=xyz"))
@@ -258,7 +268,7 @@ def wizard():
         cfg['headers'] = None
 
     # ── 8. Proxy ──────────────────────────────────────────────────────────────
-    _sec("PROXY  (optional)", "🔄")
+    _sec("PROXY  (optional)")
     print(r(DI, "  ║  Route traffic through Burp Suite / ZAP / mitmproxy"))
     print(r(DI, "  ║  e.g.  http://127.0.0.1:8080"))
     _div()
@@ -266,7 +276,7 @@ def wizard():
     cfg['proxy'] = px or None
 
     # ── 9. Extra toggles ──────────────────────────────────────────────────────
-    _sec("EXTRA OPTIONS", "🛠️")
+    _sec("EXTRA OPTIONS")
     cfg['skip_headers'] = not _yn("Test HTTP header injection (Referer, X-Forwarded-For…)?", True)
     cfg['test_dom']     = _yn("Run DOM sink analysis?", True)
     cfg['verbose']      = _yn("Verbose output (show all reflections & misses)?", False)
@@ -274,7 +284,7 @@ def wizard():
     cfg['save_json']    = _yn("Save JSON report after scan?", True)
 
     # ── 10. Confirm ───────────────────────────────────────────────────────────
-    _sec("CONFIRM & LAUNCH", "🚀")
+    _sec("CONFIRM & LAUNCH")
     rows = [
         ("Target",          cfg['url']),
         ("Endpoint",        cfg['endpoint'] or "auto-discover"),
@@ -845,7 +855,7 @@ def spinner(msg):
 def print_report(findings, target, elapsed):
     print()
     print(r(R_, '█' * TW))
-    title = f"  ⚡  AutoXSS v5.0  ─  FINAL REPORT  ─  R0b3rt0"
+    title = f" AutoXSS v5.0  ─  FINAL REPORT  ─  R0b3rt0"
     print(r(R_, '█') + r(Y_, bold(f"{title:^{TW-2}}")) + r(R_, '█'))
     print(r(R_, '█' * TW))
     print()
@@ -857,9 +867,9 @@ def print_report(findings, target, elapsed):
     mediums = [f for f in findings if 'MEDIUM' in f.get('severity', '')]
 
     if not findings:
-        print(r(G_, bold("  ✅  No XSS vulnerabilities detected.")))
+        print(r(G_, bold(" No XSS vulnerabilities detected.")))
     else:
-        print(r(R_, bold(f"  🔥  TOTAL FINDINGS : {len(findings)}")))
+        print(r(R_, bold(f" TOTAL FINDINGS : {len(findings)}")))
         print(r(R_,       f"  ▸  HIGH   : {len(highs)}"))
         print(r(Y_,       f"  ▸  MEDIUM : {len(mediums)}"))
         print()
@@ -923,7 +933,7 @@ code{{background:#0f1923;padding:2px 8px;border-radius:3px;color:#ff9900;word-br
 <div class="sub">by R0b3rt0  —  Automated XSS Framework</div>
 <div class="meta">Target: {target} &nbsp;|&nbsp; {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
 <div class="stat {'ok' if not findings else 'high'}">
-  {'✅ CLEAN' if not findings else f'🔥 {len([f for f in findings if "HIGH" in f.get("severity","")])} HIGH'}
+  {'CLEAN' if not findings else f' {len([f for f in findings if "HIGH" in f.get("severity","")])} HIGH'}
 </div>
 <div class="stat med">{len([f for f in findings if 'MEDIUM' in f.get('severity','')])} MEDIUM</div>
 <h2>VULNERABILITY FINDINGS</h2>
@@ -953,7 +963,7 @@ def run(cfg):
     client = Client(cfg)
 
     # ── Step 1 : WAF ─────────────────────────────────────────────────────────
-    step(1, "WAF / PROTECTION FINGERPRINTING  🛡️")
+    step(1, "WAF / PROTECTION FINGERPRINTING ")
     sp, st = spinner("Probing for WAF signatures")
     waf = detect_waf(client, cfg['url'])
     sp.set(); st.join(1)
@@ -966,7 +976,7 @@ def run(cfg):
     endsec()
 
     # ── Step 2 : Payloads ─────────────────────────────────────────────────────
-    step(2, "PAYLOAD LOADING  💉")
+    step(2, "PAYLOAD LOADING ")
     payloads = build_payloads(cfg['payload_profile'], base_dir,
                               cfg.get('blind_callback'))
     ok(f"Loaded {r(Y_, str(len(payloads)))} unique payloads  "
@@ -977,7 +987,7 @@ def run(cfg):
     all_findings = []
 
     # ── Step 3 : Crawl ────────────────────────────────────────────────────────
-    step(3, "CRAWLING & ENDPOINT DISCOVERY  🕷️")
+    step(3, "CRAWLING & ENDPOINT DISCOVERY ")
     if cfg['mode'] == 'targeted' and cfg.get('endpoint'):
         urls  = [cfg['endpoint']]
         forms = []
@@ -998,7 +1008,7 @@ def run(cfg):
 
     # ── Step 4 : Known param direct fuzz ─────────────────────────────────────
     if cfg.get('known_param'):
-        step(4, "KNOWN PARAMETER DIRECT FUZZ  🎯")
+        step(4, "KNOWN PARAMETER DIRECT FUZZ ")
         target_url = cfg.get('endpoint') or cfg['url']
         res = engine.test_known_param(target_url, cfg['known_param'])
         all_findings.extend(res)
@@ -1007,7 +1017,7 @@ def run(cfg):
         endsec()
 
     # ── Step 5 : URL params ───────────────────────────────────────────────────
-    step(5, "URL PARAMETER FUZZING  🔗")
+    step(5, "URL PARAMETER FUZZING ")
     param_urls = [u for u in ([cfg['url']] + urls) if '?' in u]
     if not param_urls:
         warn("No parameterized URLs found")
@@ -1025,7 +1035,7 @@ def run(cfg):
     endsec()
 
     # ── Step 6 : Forms ────────────────────────────────────────────────────────
-    step(6, "FORM / INPUT FIELD TESTING  📝")
+    step(6, "FORM / INPUT FIELD TESTING ")
     if not forms:
         warn("No forms discovered")
     else:
@@ -1054,7 +1064,7 @@ def run(cfg):
 
     # ── Step 8 : DOM ──────────────────────────────────────────────────────────
     if cfg.get('test_dom', True):
-        step(8, "DOM SINK ANALYSIS  🌐")
+        step(8, "DOM SINK ANALYSIS ")
         sp, st = spinner("Scanning JavaScript for dangerous source→sink chains")
         dom_res = engine.test_dom(cfg['url'])
         sp.set(); st.join(1)
@@ -1120,16 +1130,16 @@ def main():
         try:
             cfg = wizard()
         except KeyboardInterrupt:
-            print(r(Y_, '\n\n  ⚠️  Aborted'))
+            print(r(Y_, '\n\n   ABORTED BY USER'))
             sys.exit(0)
 
     try:
         run(cfg)
     except KeyboardInterrupt:
-        print(r(Y_, '\n\n  ⚠️  Scan interrupted'))
+        print(r(Y_, '\n\n   SCAN INTERRUPTED BY USER'))
         sys.exit(0)
     except Exception as e:
-        print(r(R_, f'\n  ✘ Fatal: {e}'))
+        print(r(R_, f'\n   !FATAL!: {e}'))
         if cfg.get('verbose'):
             import traceback
             traceback.print_exc()
